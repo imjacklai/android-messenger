@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.item_user.view.*
 
-class UserAdapter(val users: MutableList<User>) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
+class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
-        return UserViewHolder(layoutInflater.inflate(R.layout.item_user, parent, false))
+        return UserViewHolder(layoutInflater.inflate(R.layout.item_user, parent, false), itemClick)
     }
 
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
@@ -22,7 +22,7 @@ class UserAdapter(val users: MutableList<User>) : RecyclerView.Adapter<UserAdapt
         return users.size
     }
 
-    class UserViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class UserViewHolder(view: View, val itemClick: (User) -> Unit) : RecyclerView.ViewHolder(view) {
         fun bindUser(user: User) {
             with(user) {
                 Glide.with(itemView.context)
@@ -30,6 +30,7 @@ class UserAdapter(val users: MutableList<User>) : RecyclerView.Adapter<UserAdapt
                         .error(R.mipmap.ic_launcher_round)
                         .into(itemView.profileImage)
                 itemView.name.text = user.name
+                itemView.setOnClickListener { itemClick(user) }
             }
         }
     }

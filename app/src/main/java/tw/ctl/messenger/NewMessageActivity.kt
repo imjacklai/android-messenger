@@ -1,5 +1,7 @@
 package tw.ctl.messenger
 
+import android.app.Activity
+import android.content.Intent
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
@@ -32,7 +34,9 @@ class NewMessageActivity : AppCompatActivity() {
         val manager = LinearLayoutManager(this)
         manager.orientation = LinearLayoutManager.VERTICAL
         recyclerView.layoutManager = manager
-        adapter = UserAdapter(users)
+        adapter = UserAdapter(users, itemClick = { user ->
+            startChatActivity(user)
+        })
         recyclerView.adapter = adapter
     }
 
@@ -53,6 +57,18 @@ class NewMessageActivity : AppCompatActivity() {
                 progressView.visibility = View.GONE
             }
         })
+    }
+
+    private fun startChatActivity(user: User) {
+        val intent = Intent()
+        val bundle = Bundle()
+        bundle.putString("id", user.id)
+        bundle.putString("name", user.name)
+        bundle.putString("email", user.email)
+        bundle.putString("profileImageUrl", user.profileImageUrl)
+        intent.putExtras(bundle)
+        setResult(Activity.RESULT_OK, intent)
+        finish()
     }
 
 }

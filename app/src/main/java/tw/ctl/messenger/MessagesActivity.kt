@@ -1,5 +1,6 @@
 package tw.ctl.messenger
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -16,6 +17,7 @@ import kotlinx.android.synthetic.main.activity_messages.*
 
 class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
+    private val RC_NEW_MESSAGE = 9001
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private var googleApiClient: GoogleApiClient? = null
 
@@ -29,7 +31,10 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         if (currentUser == null) {
             startActivity(Intent(this, SignInActivity::class.java))
         } else {
-            newMessageButton.setOnClickListener { startActivity(Intent(this, NewMessageActivity::class.java)) }
+            newMessageButton.setOnClickListener {
+                val intent = Intent(this, NewMessageActivity::class.java)
+                startActivityForResult(intent, RC_NEW_MESSAGE)
+            }
         }
     }
 
@@ -47,6 +52,16 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode != RC_NEW_MESSAGE || resultCode != Activity.RESULT_OK) return
+
+        val intent = Intent(this, ChatActivity::class.java)
+        intent.putExtras(data.extras)
+        startActivity(intent)
     }
 
     override fun onConnectionFailed(connectionResult: ConnectionResult) {
