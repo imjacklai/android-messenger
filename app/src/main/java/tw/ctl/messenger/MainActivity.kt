@@ -12,6 +12,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
@@ -28,7 +29,7 @@ class MainActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedList
         if (currentUser == null) {
             startActivity(Intent(this, SignInActivity::class.java))
         } else {
-
+            newMessageButton.setOnClickListener {  }
         }
     }
 
