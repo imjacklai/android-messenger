@@ -12,16 +12,16 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_messages.*
 
-class MainActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
+class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private var googleApiClient: GoogleApiClient? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_messages)
         setupGoogleApiClient()
 
         val currentUser = auth.currentUser
