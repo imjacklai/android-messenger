@@ -29,7 +29,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         if (currentUser == null) {
             startActivity(Intent(this, SignInActivity::class.java))
         } else {
-            newMessageButton.setOnClickListener {  }
+            newMessageButton.setOnClickListener { startActivity(Intent(this, NewMessageActivity::class.java)) }
         }
     }
 
