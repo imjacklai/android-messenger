@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.View
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -44,6 +45,7 @@ class NewMessageActivity : AppCompatActivity() {
         FirebaseDatabase.getInstance().reference.child("users").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 dataSnapshot.children.forEach { snapshot ->
+                    if (FirebaseAuth.getInstance().currentUser?.uid == snapshot.key) return@forEach
                     val user = snapshot.getValue<User>(User::class.java)
                     user.id = snapshot.key
                     users.add(user)
