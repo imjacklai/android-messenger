@@ -54,10 +54,10 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode != RC_NEW_MESSAGE || resultCode != Activity.RESULT_OK) return
+        if (requestCode != RC_NEW_MESSAGE || resultCode != Activity.RESULT_OK || data == null) return
 
         val intent = Intent(this, ChatActivity::class.java)
         intent.putExtras(data.extras)
