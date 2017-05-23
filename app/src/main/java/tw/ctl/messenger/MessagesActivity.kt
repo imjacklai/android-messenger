@@ -13,7 +13,6 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.View.GONE
 import android.widget.Toast
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -219,7 +218,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     }
 
     private fun showFetchError() {
-        progressView.visibility = GONE
+        progressView.visibility = View.GONE
         Toast.makeText(this, "讀取失敗", Toast.LENGTH_SHORT).show()
     }
 
