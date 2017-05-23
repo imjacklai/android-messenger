@@ -29,7 +29,16 @@ class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) :
                         .load(user.profileImageUrl)
                         .error(R.mipmap.ic_launcher_round)
                         .into(itemView.profileImage)
+
                 itemView.name.text = user.name
+
+                if (user.lastMessage == null) {
+                    itemView.lastMessage.visibility = View.GONE
+                } else {
+                    itemView.lastMessage.visibility = View.VISIBLE
+                    itemView.lastMessage.text = user.lastMessage
+                }
+
                 itemView.setOnClickListener { itemClick(user) }
             }
         }

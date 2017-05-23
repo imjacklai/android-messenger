@@ -44,7 +44,7 @@ class ChatActivity : AppCompatActivity() {
         val toId = toUser?.id
         val fromId = FirebaseAuth.getInstance().currentUser?.uid
         val timestamp = Calendar.getInstance().timeInMillis
-        val values = mutableMapOf("toid" to toId, "fromId" to fromId, "timestamp" to timestamp, "text" to message)
+        val values = mutableMapOf("toId" to toId, "fromId" to fromId, "timestamp" to timestamp, "text" to message)
 
         reference.updateChildren(values, { error, _ ->
             if (error != null) {
