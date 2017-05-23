@@ -8,6 +8,7 @@ import android.os.Handler
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -24,6 +25,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.activity_messages.*
+import java.util.*
 
 class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
@@ -196,6 +198,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                         val user = snapshot.getValue<User>(User::class.java)
                         user.id = snapshot.key
                         user.lastMessage = message.text
+                        user.timestamp = "" + DateUtils.getRelativeTimeSpanString(message.timestamp!!, Date().time, DateUtils.SECOND_IN_MILLIS)
                         users.add(user)
                         adapter?.notifyDataSetChanged()
                         progressView.visibility = View.GONE

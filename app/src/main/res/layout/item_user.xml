@@ -34,7 +34,7 @@
             android:maxLines="1"
             android:ellipsize="end"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/timestamp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/lastMessage"/>
 
@@ -49,6 +49,18 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/name"/>
+
+        <TextView
+            android:id="@+id/timestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textColor="#9E9E9E"
+            app:layout_constraintLeft_toRightOf="@+id/name"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/lastMessage"/>
 
     </android.support.constraint.ConstraintLayout>
 

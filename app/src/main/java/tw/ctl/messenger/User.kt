@@ -5,5 +5,6 @@ data class User(
         val name: String? = null,
         val email: String? = null,
         val profileImageUrl: String? = null,
-        var lastMessage: String? = null
+        var lastMessage: String? = null,
+        var timestamp: String? = null
 )

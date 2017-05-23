@@ -39,6 +39,13 @@ class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) :
                     itemView.lastMessage.text = user.lastMessage
                 }
 
+                if (user.timestamp == null) {
+                    itemView.timestamp.visibility = View.GONE
+                } else {
+                    itemView.timestamp.visibility = View.VISIBLE
+                    itemView.timestamp.text = user.timestamp
+                }
+
                 itemView.setOnClickListener { itemClick(user) }
             }
         }
