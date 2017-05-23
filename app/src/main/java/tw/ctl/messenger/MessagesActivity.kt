@@ -29,7 +29,8 @@ import java.util.*
 
 class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
-    private val RC_NEW_MESSAGE = 9001
+    private val RC_SIGN_IN = 9001
+    private val RC_NEW_MESSAGE = 9002
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val users: MutableList<User> = mutableListOf()
     private val messages: MutableList<Message> = mutableListOf()
@@ -53,7 +54,8 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         val currentUser = auth.currentUser
 
         if (currentUser == null) {
-            startActivity(Intent(this, SignInActivity::class.java))
+            val intent = Intent(this, SignInActivity::class.java)
+            startActivityForResult(intent, RC_SIGN_IN)
         } else {
             setupUI()
             fetchUserMessages(currentUser.uid)
@@ -79,11 +81,16 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode != RC_NEW_MESSAGE || resultCode != Activity.RESULT_OK || data == null) return
+        if (resultCode != Activity.RESULT_OK) return
 
-        val intent = Intent(this, ChatActivity::class.java)
-        intent.putExtras(data.extras)
-        startActivity(intent)
+        if (requestCode == RC_SIGN_IN) {
+            setupUI()
+            fetchUserMessages(auth.currentUser!!.uid)
+        } else if (requestCode == RC_NEW_MESSAGE && data != null) {
+            val intent = Intent(this, ChatActivity::class.java)
+            intent.putExtras(data.extras)
+            startActivity(intent)
+        }
     }
 
     override fun onConnectionFailed(connectionResult: ConnectionResult) {
