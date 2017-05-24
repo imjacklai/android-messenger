@@ -17,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
@@ -96,8 +97,9 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
             return
         }
 
+        val registrationId = FirebaseInstanceId.getInstance().token ?: ""
         val values = mutableMapOf("email" to account.email, "name" to account.displayName,
-                "profileImageUrl" to account.photoUrl.toString())
+                "profileImageUrl" to account.photoUrl.toString(), "registrationId" to registrationId)
 
         FirebaseDatabase.getInstance().reference.child("users").child(user.uid)
                 .setValue(values, { error, _ ->
