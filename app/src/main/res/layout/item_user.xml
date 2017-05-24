@@ -55,7 +55,7 @@
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:gravity="center"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textColor="#9E9E9E"
             app:layout_constraintLeft_toRightOf="@+id/name"
             app:layout_constraintRight_toRightOf="parent"
