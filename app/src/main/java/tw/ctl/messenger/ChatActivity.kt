@@ -107,7 +107,7 @@ class ChatActivity : AppCompatActivity() {
         reference.updateChildren(values, { error, _ ->
             if (error != null) {
                 Toast.makeText(this, "訊息傳送失敗", Toast.LENGTH_SHORT).show()
-                Log.d("Messenger", "Unable to save message: $error")
+                Log.e("Messenger", "Unable to save message: $error")
                 return@updateChildren
             }
 
