@@ -76,7 +76,7 @@ class ChatActivity : AppCompatActivity() {
                     }
 
                     override fun onChildRemoved(p0: DataSnapshot?) {
-                        
+
                     }
                 })
     }

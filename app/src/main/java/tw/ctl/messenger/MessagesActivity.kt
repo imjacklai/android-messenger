@@ -19,10 +19,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.activity_messages.*
 import java.util.*
 
@@ -93,7 +90,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     }
 
     override fun onConnectionFailed(connectionResult: ConnectionResult) {
-        Log.d("Messenger", "onConnectionFailed: $connectionResult")
+        Log.e("Messenger", "Google api client connection failed: $connectionResult")
         Toast.makeText(this, "Google Play Service 錯誤", Toast.LENGTH_SHORT).show()
     }
 
@@ -148,34 +145,54 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
 
     private fun fetchUserMessages(uid: String) {
         FirebaseDatabase.getInstance().reference.child("user-messages").child(uid)
-                .addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        dataSnapshot.children.forEach { snapshot ->
-                            val userId = snapshot.key
-                            fetchMessages(uid, userId)
-                        }
+                .addChildEventListener(object : ChildEventListener {
+                    override fun onCancelled(error: DatabaseError?) {
+                        showFetchError()
+                        Log.e("Messenger", "Unable to fetch user messages (self): $error")
                     }
 
-                    override fun onCancelled(error: DatabaseError) {
-                        showFetchError()
-                        Log.d("Messenger", "Fetch user-messages self error: $error")
+                    override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
+
+                    }
+
+                    override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
+
+                    }
+
+                    override fun onChildAdded(snapshot: DataSnapshot, p1: String?) {
+                        val userId = snapshot.key
+                        fetchMessages(uid, userId)
+                    }
+
+                    override fun onChildRemoved(p0: DataSnapshot?) {
+
                     }
                 })
     }
 
     private fun fetchMessages(uid: String, userId: String) {
         FirebaseDatabase.getInstance().reference.child("user-messages").child(uid).child(userId)
-                .addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        dataSnapshot.children.forEach { snapshot ->
-                            val messageId = snapshot.key
-                            fetchMessage(messageId)
-                        }
-                    }
-
+                .addChildEventListener(object : ChildEventListener {
                     override fun onCancelled(error: DatabaseError?) {
                         showFetchError()
-                        Log.d("Messenger", "Fetch user-messages partner error: $error")
+                        Log.e("Messenger", "Unable to fetch user messages (partner): $error")
+                    }
+
+                    override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
+
+                    }
+
+                    override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
+
+                    }
+
+                    override fun onChildAdded(snapshot: DataSnapshot, p1: String?) {
+                        val messageId = snapshot.key
+                        fetchMessage(messageId)
+                    }
+
+                    override fun onChildRemoved(p0: DataSnapshot?) {
+
                     }
                 })
     }
@@ -192,7 +209,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
 
                     override fun onCancelled(error: DatabaseError?) {
                         showFetchError()
-                        Log.d("Messenger", "Fetch messages error: $error")
+                        Log.e("Messenger", "Unable to fetch message: $error")
                     }
                 })
     }
@@ -210,9 +227,9 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                         progressView.visibility = View.GONE
                     }
 
-                    override fun onCancelled(error: DatabaseError) {
+                    override fun onCancelled(error: DatabaseError?) {
                         showFetchError()
-                        Log.d("Messenger", "Fetch user error: $error")
+                        Log.e("Messenger", "Unable to fetch user: $error")
                     }
                 })
     }

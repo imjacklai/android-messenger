@@ -42,7 +42,7 @@ class NewMessageActivity : AppCompatActivity() {
     }
 
     private fun fetchUsers() {
-        FirebaseDatabase.getInstance().reference.child("users").addValueEventListener(object : ValueEventListener {
+        FirebaseDatabase.getInstance().reference.child("users").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 dataSnapshot.children.forEach { snapshot ->
                     if (FirebaseAuth.getInstance().currentUser?.uid == snapshot.key) return@forEach
@@ -50,12 +50,12 @@ class NewMessageActivity : AppCompatActivity() {
                     user.id = snapshot.key
                     users.add(user)
                 }
-                adapter!!.notifyDataSetChanged()
+                adapter?.notifyDataSetChanged()
                 progressView.visibility = View.GONE
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                Log.d("Messenger", "Fetch users on cancelled: ${error.toException()}")
+            override fun onCancelled(error: DatabaseError?) {
+                Log.e("Messenger", "Unable to fetch users: $error")
                 progressView.visibility = View.GONE
             }
         })

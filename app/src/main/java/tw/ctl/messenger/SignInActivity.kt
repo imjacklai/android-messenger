@@ -83,7 +83,7 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
                         saveUserToDatabase(auth.currentUser, account)
                     } else {
                         showSignInError()
-                        Log.d("Messenger", "signInWithCredential:failure: ${task.exception}")
+                        Log.e("Messenger", "Sign in failed with credential: ${task.exception}")
                     }
                 })
     }
@@ -101,7 +101,7 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
                 .setValue(values, { error, _ ->
                     if (error != null) {
                         showSignInError()
-                        Log.d("Messenger", "Unable to save user to database: $error")
+                        Log.e("Messenger", "Unable to save user: $error")
                         return@setValue
                     }
 
