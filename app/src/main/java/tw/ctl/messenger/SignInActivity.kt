@@ -52,6 +52,8 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
         }
     }
 
+    override fun onBackPressed() {}
+
     private fun setupGoogleApiClient() {
         val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.web_client_id))
