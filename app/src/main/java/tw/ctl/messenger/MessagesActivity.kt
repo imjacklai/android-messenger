@@ -160,6 +160,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                     }
 
                     override fun onChildAdded(snapshot: DataSnapshot, p1: String?) {
+                        progressView.visibility = View.VISIBLE
                         val userId = snapshot.key
                         fetchMessages(uid, userId)
                     }
