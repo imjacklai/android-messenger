@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.os.Bundle
 import android.os.PowerManager
 import android.support.v4.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -25,10 +26,22 @@ class MessagingService : FirebaseMessagingService() {
         /**
          * Get data from notification.
          */
-        val title = remoteMessage.data["title"]
-        val body = remoteMessage.data["body"]
+        val title = remoteMessage.notification.title
+        val body = remoteMessage.notification.body
 
-        val intent = Intent(this, MessagesActivity::class.java)
+        val userId = remoteMessage.data["user_id"]
+        val userName = remoteMessage.data["user_name"]
+        val userEmail = remoteMessage.data["user_email"]
+        val userProfileImageUrl = remoteMessage.data["user_image"]
+
+        val bundle = Bundle()
+        bundle.putString("id", userId)
+        bundle.putString("name", userName)
+        bundle.putString("email", userEmail)
+        bundle.putString("profileImageUrl", userProfileImageUrl)
+
+        val intent = Intent(this, ChatActivity::class.java)
+        intent.putExtras(bundle)
         /**
          * Intent.FLAG_ACTIVITY_NEW_TASK:   在堆疊中開啟一個新的任務
          * Intent.FLAG_ACTIVITY_SINGLE_TOP: 將Activity顯示在最上層
@@ -38,8 +51,7 @@ class MessagingService : FirebaseMessagingService() {
         /**
          * FLAG_UPDATE_CURRENT: 開啟新的Intent時，將自動更新extra資料並取代舊有的資料
          */
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         val notificationBuilder = NotificationCompat.Builder(this)
                 .setPriority(Notification.PRIORITY_HIGH)

@@ -56,6 +56,15 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
             setupUI()
             fetchUserMessages(currentUser.uid)
         }
+
+        // Receive notification data when app launch.
+        handleNotification(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        // Receive notification data when app in background.
+        handleNotification(intent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -238,6 +247,22 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     private fun showFetchError() {
         progressView.visibility = View.GONE
         Toast.makeText(this, "讀取失敗", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun handleNotification(dataIntent: Intent?) {
+        val userId = dataIntent?.getStringExtra("user_id") ?: return
+        val userName = dataIntent.getStringExtra("user_name") ?: return
+        val userEmail = dataIntent.getStringExtra("user_email") ?: return
+        val userProfileImageUrl = dataIntent.getStringExtra("user_image") ?: return
+
+        val bundle = Bundle()
+        bundle.putString("id", userId)
+        bundle.putString("name", userName)
+        bundle.putString("email", userEmail)
+        bundle.putString("profileImageUrl", userProfileImageUrl)
+        val intent = Intent(this, ChatActivity::class.java)
+        intent.putExtras(bundle)
+        startActivity(intent)
     }
 
 }
