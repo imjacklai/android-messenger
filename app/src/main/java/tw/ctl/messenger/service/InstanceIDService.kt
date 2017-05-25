@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.service
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth

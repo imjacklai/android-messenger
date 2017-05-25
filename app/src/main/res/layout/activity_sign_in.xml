@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryDark"
-    tools:context="tw.ctl.messenger.SignInActivity">
+    tools:context="tw.ctl.messenger.activity.SignInActivity">
 
     <Button
         android:id="@+id/googleSignInButton"

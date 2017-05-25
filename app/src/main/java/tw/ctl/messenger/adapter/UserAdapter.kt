@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.adapter
 
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.item_user.view.*
+import tw.ctl.messenger.R
+import tw.ctl.messenger.model.User
 
 class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 

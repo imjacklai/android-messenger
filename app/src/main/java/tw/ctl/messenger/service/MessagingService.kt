@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.service
 
 import android.app.Notification
 import android.app.NotificationManager
@@ -11,6 +11,8 @@ import android.os.PowerManager
 import android.support.v4.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import tw.ctl.messenger.R
+import tw.ctl.messenger.activity.ChatActivity
 
 class MessagingService : FirebaseMessagingService() {
 

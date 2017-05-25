@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.model
 
 data class User(
         var id: String? = null,

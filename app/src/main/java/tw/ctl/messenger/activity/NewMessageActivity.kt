@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.activity
 
 import android.app.Activity
 import android.content.Intent
@@ -15,6 +15,9 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.activity_new_message.*
+import tw.ctl.messenger.R
+import tw.ctl.messenger.adapter.UserAdapter
+import tw.ctl.messenger.model.User
 
 class NewMessageActivity : AppCompatActivity() {
 

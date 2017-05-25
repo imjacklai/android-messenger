@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.activity
 
 import android.app.Activity
 import android.content.Intent
@@ -21,6 +21,10 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.activity_messages.*
+import tw.ctl.messenger.R
+import tw.ctl.messenger.adapter.UserAdapter
+import tw.ctl.messenger.model.Message
+import tw.ctl.messenger.model.User
 import java.util.*
 
 class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
@@ -209,7 +213,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
 
     private fun fetchMessage(messageId: String) {
         FirebaseDatabase.getInstance().reference.child("messages").child(messageId)
-                .addListenerForSingleValueEvent(object : ValueEventListener{
+                .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val message = snapshot.getValue<Message>(Message::class.java)
                         messagesMap.put(message.chatPartnerId(), message)

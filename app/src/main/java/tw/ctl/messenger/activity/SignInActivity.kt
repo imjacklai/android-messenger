@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.activity
 
 import android.app.Activity
 import android.content.Intent
@@ -19,6 +19,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.activity_sign_in.*
+import tw.ctl.messenger.R
 
 class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 

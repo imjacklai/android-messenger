@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".MessagesActivity"
+            android:name=".activity.MessagesActivity"
             android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -24,21 +24,21 @@
         </activity>
 
         <activity
-            android:name=".SignInActivity"
+            android:name=".activity.SignInActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize"/>
 
-        <activity android:name=".NewMessageActivity"
+        <activity android:name=".activity.NewMessageActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize"/>
 
-        <activity android:name=".ChatActivity"
+        <activity android:name=".activity.ChatActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="adjustResize"/>
 
         <service
-            android:name=".MessagingService"
+            android:name=".service.MessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
@@ -46,7 +46,7 @@
         </service>
 
         <service
-            android:name=".InstanceIDService"
+            android:name=".service.InstanceIDService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="tw.ctl.messenger.MessagesActivity">
+    tools:context="tw.ctl.messenger.activity.MessagesActivity">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView"

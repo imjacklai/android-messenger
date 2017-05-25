@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.model
 
 import com.google.firebase.auth.FirebaseAuth
 

@@ -1,4 +1,4 @@
-package tw.ctl.messenger
+package tw.ctl.messenger.activity
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -8,6 +8,10 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.activity_chat.*
+import tw.ctl.messenger.R
+import tw.ctl.messenger.adapter.MessageAdapter
+import tw.ctl.messenger.model.Message
+import tw.ctl.messenger.model.User
 import java.util.*
 
 class ChatActivity : AppCompatActivity() {

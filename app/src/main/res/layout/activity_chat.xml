@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    tools:context="tw.ctl.messenger.ChatActivity">
+    tools:context="tw.ctl.messenger.activity.ChatActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
