@@ -39,8 +39,7 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
                 if (message.fromId == FirebaseAuth.getInstance().currentUser?.uid) {
                     // Self message.
                     itemView.profileImage.visibility = View.GONE
-                    itemView.message.setBackgroundResource(R.drawable.self_message_bubble_bg)
-                    itemView.message.setTextColor(Color.WHITE)
+                    setupMessage(message, R.drawable.self_message_bubble_bg, Color.WHITE)
                     updateConstraint(true)
                 } else {
                     // Partner message.
@@ -60,12 +59,23 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
                             })
 
                     itemView.profileImage.visibility = View.VISIBLE
-                    itemView.message.setBackgroundResource(R.drawable.partner_message_bubble_bg)
-                    itemView.message.setTextColor(Color.BLACK)
+                    setupMessage(message, R.drawable.partner_message_bubble_bg, Color.BLACK)
                     updateConstraint(false)
                 }
+            }
+        }
 
+        private fun setupMessage(message: Message, background: Int, textColor: Int) {
+            if (message.imageUrl == null) {
+                itemView.image.visibility = View.GONE
+                itemView.message.setBackgroundResource(background)
+                itemView.message.setTextColor(textColor)
                 itemView.message.text = message.text
+            } else {
+                itemView.image.visibility = View.VISIBLE
+                Glide.with(itemView.context)
+                        .load(message.imageUrl)
+                        .into(itemView.image)
             }
         }
 
@@ -75,11 +85,15 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
             set.clone(layout)
             set.clear(itemView.message.id, ConstraintSet.LEFT)
             set.clear(itemView.message.id, ConstraintSet.RIGHT)
+            set.clear(itemView.image.id, ConstraintSet.LEFT)
+            set.clear(itemView.image.id, ConstraintSet.RIGHT)
 
             if (isSelf) {
                 set.connect(itemView.message.id, ConstraintSet.RIGHT, layout.id, ConstraintSet.RIGHT)
+                set.connect(itemView.image.id, ConstraintSet.RIGHT, layout.id, ConstraintSet.RIGHT)
             } else {
                 set.connect(itemView.message.id, ConstraintSet.LEFT, itemView.profileImage.id, ConstraintSet.RIGHT)
+                set.connect(itemView.image.id, ConstraintSet.LEFT, itemView.profileImage.id, ConstraintSet.RIGHT)
             }
 
             set.applyTo(layout)

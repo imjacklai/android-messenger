@@ -6,7 +6,10 @@ data class Message(
         val fromId: String? = null,
         val toId: String? = null,
         val text: String? = null,
-        val timestamp: Long? = null
+        val timestamp: Long? = null,
+        val imageUrl: String? = null,
+        val imageWidth: Int? = null,
+        val imageHeight: Int? = null
 ) {
 
     fun chatPartnerId(): String {

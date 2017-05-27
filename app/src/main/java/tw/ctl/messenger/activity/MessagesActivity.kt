@@ -234,7 +234,17 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val user = snapshot.getValue<User>(User::class.java)
                         user.id = snapshot.key
-                        user.lastMessage = message.text
+
+                        if (message.imageUrl == null) {
+                            user.lastMessage = message.text
+                        } else {
+                            if (message.fromId == FirebaseAuth.getInstance().currentUser?.uid) {
+                                user.lastMessage = "你傳送一張圖片"
+                            } else {
+                                user.lastMessage = "對方傳送一張圖片"
+                            }
+                        }
+
                         user.timestamp = "" + DateUtils.getRelativeTimeSpanString(message.timestamp!!, Date().time, DateUtils.SECOND_IN_MILLIS)
                         users.add(user)
                         adapter?.notifyDataSetChanged()
