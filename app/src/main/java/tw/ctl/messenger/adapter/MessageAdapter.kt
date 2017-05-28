@@ -68,11 +68,13 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
         private fun setupMessage(message: Message, background: Int, textColor: Int) {
             if (message.imageUrl == null) {
                 itemView.image.visibility = View.GONE
+                itemView.message.visibility = View.VISIBLE
                 itemView.message.setBackgroundResource(background)
                 itemView.message.setTextColor(textColor)
                 itemView.message.text = message.text
             } else {
                 itemView.image.visibility = View.VISIBLE
+                itemView.message.visibility = View.GONE
                 Glide.with(itemView.context)
                         .load(message.imageUrl)
                         .into(itemView.image)
