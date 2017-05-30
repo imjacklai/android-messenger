@@ -123,7 +123,8 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         auth.signOut()
 
         Auth.GoogleSignInApi.signOut(googleApiClient).setResultCallback { _ ->
-            startActivity(Intent(this, SignInActivity::class.java))
+            val intent = Intent(this, SignInActivity::class.java)
+            startActivityForResult(intent, RC_SIGN_IN)
         }
     }
 
