@@ -151,13 +151,17 @@ class ChatActivity : AppCompatActivity() {
 
             val messageId = reference.key
 
-            FirebaseDatabase.getInstance().reference
-                    .child("user-messages").child(fromId).child(toId)
+            FirebaseDatabase.getInstance().reference.child("user-messages").child(fromId).child(toId)
                     .updateChildren(mutableMapOf(messageId to 1) as Map<String, Any>?)
 
-            FirebaseDatabase.getInstance().reference
-                    .child("user-messages").child(toId).child(fromId)
+            FirebaseDatabase.getInstance().reference.child("user-messages").child(toId).child(fromId)
                     .updateChildren(mutableMapOf(messageId to 1) as Map<String, Any>?)
+
+            FirebaseDatabase.getInstance().reference.child("user-list").child(fromId).child(toId)
+                    .setValue(mutableMapOf(messageId to 1) as Map<String, Any>?)
+
+            FirebaseDatabase.getInstance().reference.child("user-list").child(toId).child(fromId)
+                    .setValue(mutableMapOf(messageId to 1) as Map<String, Any>?)
 
             input.setText("")
         })

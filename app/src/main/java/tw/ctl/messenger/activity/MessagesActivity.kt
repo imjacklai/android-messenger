@@ -4,11 +4,9 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.PorterDuff
 import android.os.Bundle
-import android.os.Handler
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.text.format.DateUtils
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -25,7 +23,6 @@ import tw.ctl.messenger.R
 import tw.ctl.messenger.adapter.UserAdapter
 import tw.ctl.messenger.model.Message
 import tw.ctl.messenger.model.User
-import java.util.*
 
 class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
@@ -33,18 +30,8 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     private val RC_NEW_MESSAGE = 9002
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val users: MutableList<User> = mutableListOf()
-    private val messages: MutableList<Message> = mutableListOf()
-    private val messagesMap: MutableMap<String, Message> = mutableMapOf()
     private var adapter: UserAdapter? = null
     private var googleApiClient: GoogleApiClient? = null
-    private val handler = Handler()
-    private val task = Runnable {
-        messages.clear()
-        users.clear()
-        messages.addAll(messagesMap.values)
-        messages.sortByDescending { it.timestamp }
-        messages.map { message -> fetchUser(message) }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -163,7 +150,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     }
 
     private fun fetchUserMessages(uid: String) {
-        FirebaseDatabase.getInstance().reference.child("user-messages").child(uid)
+        FirebaseDatabase.getInstance().reference.child("user-list").child(uid)
                 .addChildEventListener(object : ChildEventListener {
                     override fun onCancelled(error: DatabaseError?) {
                         showFetchError()
@@ -191,7 +178,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     }
 
     private fun fetchMessages(uid: String, userId: String) {
-        FirebaseDatabase.getInstance().reference.child("user-messages").child(uid).child(userId)
+        FirebaseDatabase.getInstance().reference.child("user-list").child(uid).child(userId)
                 .addChildEventListener(object : ChildEventListener {
                     override fun onCancelled(error: DatabaseError?) {
                         showFetchError()
@@ -222,9 +209,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                 .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val message = snapshot.getValue<Message>(Message::class.java)
-                        messagesMap.put(message.chatPartnerId(), message)
-                        handler.removeCallbacks(task)
-                        handler.postDelayed(task, 500)
+                        fetchUser(message)
                     }
 
                     override fun onCancelled(error: DatabaseError?) {
@@ -240,6 +225,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val user = snapshot.getValue<User>(User::class.java)
                         user.id = snapshot.key
+                        user.timestamp = message.timestamp
 
                         if (message.imageUrl == null) {
                             user.lastMessage = message.text
@@ -251,8 +237,9 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                             }
                         }
 
-                        user.timestamp = message.timestamp
+                        users.filter { it.id == user.id }.forEach { users.remove(it) }
                         users.add(user)
+                        users.sortByDescending { it.timestamp }
                         adapter?.notifyDataSetChanged()
                         progressView.visibility = View.GONE
                     }
