@@ -1,6 +1,7 @@
 package tw.ctl.messenger.adapter
 
 import android.support.v7.widget.RecyclerView
+import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +9,7 @@ import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.item_user.view.*
 import tw.ctl.messenger.R
 import tw.ctl.messenger.model.User
+import java.util.*
 
 class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
@@ -45,7 +47,7 @@ class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) :
                     itemView.timestamp.visibility = View.GONE
                 } else {
                     itemView.timestamp.visibility = View.VISIBLE
-                    itemView.timestamp.text = user.timestamp
+                    itemView.timestamp.text = DateUtils.getRelativeTimeSpanString(user.timestamp!!, Date().time, DateUtils.SECOND_IN_MILLIS)
                 }
 
                 itemView.setOnClickListener { itemClick(user) }

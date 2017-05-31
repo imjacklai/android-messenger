@@ -65,6 +65,11 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         handleNotification(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        adapter?.notifyDataSetChanged()
+    }
+
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         // Receive notification data when app in background.
@@ -246,7 +251,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                             }
                         }
 
-                        user.timestamp = "" + DateUtils.getRelativeTimeSpanString(message.timestamp!!, Date().time, DateUtils.SECOND_IN_MILLIS)
+                        user.timestamp = message.timestamp
                         users.add(user)
                         adapter?.notifyDataSetChanged()
                         progressView.visibility = View.GONE
