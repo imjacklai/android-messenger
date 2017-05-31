@@ -11,11 +11,11 @@ import tw.ctl.messenger.R
 import tw.ctl.messenger.model.User
 import java.util.*
 
-class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
+class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit, val itemLongClick: (User) -> Boolean) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
-        return UserViewHolder(layoutInflater.inflate(R.layout.item_user, parent, false), itemClick)
+        return UserViewHolder(layoutInflater.inflate(R.layout.item_user, parent, false), itemClick, itemLongClick)
     }
 
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
@@ -26,7 +26,7 @@ class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) :
         return users.size
     }
 
-    class UserViewHolder(view: View, val itemClick: (User) -> Unit) : RecyclerView.ViewHolder(view) {
+    class UserViewHolder(view: View, val itemClick: (User) -> Unit, val itemLongClick: (User) -> Boolean) : RecyclerView.ViewHolder(view) {
         fun bindUser(user: User) {
             with(user) {
                 Glide.with(itemView.context)
@@ -51,6 +51,7 @@ class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit) :
                 }
 
                 itemView.setOnClickListener { itemClick(user) }
+                itemView.setOnLongClickListener { itemLongClick(user) }
             }
         }
     }

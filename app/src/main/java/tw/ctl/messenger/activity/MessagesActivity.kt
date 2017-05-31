@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
@@ -132,9 +133,14 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         val manager = LinearLayoutManager(this)
         manager.orientation = LinearLayoutManager.VERTICAL
         recyclerView.layoutManager = manager
-        adapter = UserAdapter(users, itemClick = { user ->
-            startChatActivity(user)
-        })
+        adapter = UserAdapter(users,
+                itemClick = { user ->
+                    startChatActivity(user)
+                },
+                itemLongClick = { user ->
+                    showDeleteDialog(user)
+                    true
+                })
         recyclerView.adapter = adapter
     }
 
@@ -270,6 +276,34 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         val intent = Intent(this, ChatActivity::class.java)
         intent.putExtras(bundle)
         startActivity(intent)
+    }
+
+    private fun showDeleteDialog(user: User) {
+        AlertDialog.Builder(this)
+                .setTitle("確定要刪除？")
+                .setPositiveButton("確定", { _, _ -> deleteUser(user) })
+                .setNegativeButton("取消", { _, _ -> })
+                .show()
+    }
+
+    private fun deleteUser(user: User) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        FirebaseDatabase.getInstance().reference.child("user-messages").child(uid).child(user.id).removeValue { error, _ ->
+            if (error != null) {
+                Log.d("Messenger", "Unable to remove from user messages: $error")
+                return@removeValue
+            }
+
+            FirebaseDatabase.getInstance().reference.child("user-list").child(uid).child(user.id).removeValue removeLabel@ { error, _ ->
+                if (error != null) {
+                    Log.d("Messenger", "Unable to remove from user list: $error")
+                    return@removeLabel
+                }
+
+                users.remove(user)
+                adapter?.notifyDataSetChanged()
+            }
+        }
     }
 
 }

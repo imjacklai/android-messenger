@@ -38,9 +38,11 @@ class NewMessageActivity : AppCompatActivity() {
         val manager = LinearLayoutManager(this)
         manager.orientation = LinearLayoutManager.VERTICAL
         recyclerView.layoutManager = manager
-        adapter = UserAdapter(users, itemClick = { user ->
-            startChatActivity(user)
-        })
+        adapter = UserAdapter(users,
+                itemClick = { user ->
+                    startChatActivity(user)
+                },
+                itemLongClick = { _ -> false })
         recyclerView.adapter = adapter
     }
 
