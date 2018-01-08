@@ -48,8 +48,7 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
                                 override fun onDataChange(snapshot: DataSnapshot) {
                                     val user = snapshot.getValue<User>(User::class.java)
                                     Glide.with(itemView.context)
-                                            .load(user.profileImageUrl)
-                                            .error(R.mipmap.ic_launcher_round)
+                                            .load(user?.profileImageUrl)
                                             .into(itemView.profileImage)
                                 }
 

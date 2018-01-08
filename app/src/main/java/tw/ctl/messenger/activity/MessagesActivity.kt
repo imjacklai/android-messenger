@@ -215,7 +215,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                 .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val message = snapshot.getValue<Message>(Message::class.java)
-                        fetchUser(message)
+                        fetchUser(message!!)
                     }
 
                     override fun onCancelled(error: DatabaseError?) {
@@ -230,21 +230,21 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                 .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val user = snapshot.getValue<User>(User::class.java)
-                        user.id = snapshot.key
-                        user.timestamp = message.timestamp
+                        user?.id = snapshot.key
+                        user?.timestamp = message.timestamp
 
                         if (message.imageUrl == null) {
-                            user.lastMessage = message.text
+                            user?.lastMessage = message.text
                         } else {
                             if (message.fromId == FirebaseAuth.getInstance().currentUser?.uid) {
-                                user.lastMessage = "你傳送一張圖片"
+                                user?.lastMessage = "你傳送一張圖片"
                             } else {
-                                user.lastMessage = "對方傳送一張圖片"
+                                user?.lastMessage = "對方傳送一張圖片"
                             }
                         }
 
-                        users.filter { it.id == user.id }.forEach { users.remove(it) }
-                        users.add(user)
+                        users.filter { it.id == user?.id }.forEach { users.remove(it) }
+                        users.add(user!!)
                         users.sortByDescending { it.timestamp }
                         adapter?.notifyDataSetChanged()
                         progressView.visibility = View.GONE

@@ -114,7 +114,7 @@ class ChatActivity : AppCompatActivity() {
                 .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val message = snapshot.getValue<Message>(Message::class.java)
-                        messages.add(message)
+                        messages.add(message!!)
                         adapter?.notifyItemInserted(messages.indexOf(message))
                         recyclerView.smoothScrollToPosition(messages.size - 1)
                     }
@@ -140,7 +140,7 @@ class ChatActivity : AppCompatActivity() {
         val timestamp = Calendar.getInstance().timeInMillis
         val values = mutableMapOf("toId" to toId, "fromId" to fromId, "timestamp" to timestamp)
 
-        properties.forEach { key, value -> values[key] = value }
+        for ((key, value) in properties) { values[key] = value }
 
         reference.updateChildren(values, { error, _ ->
             if (error != null) {

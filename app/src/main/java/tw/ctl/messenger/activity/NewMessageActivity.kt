@@ -52,8 +52,8 @@ class NewMessageActivity : AppCompatActivity() {
                 dataSnapshot.children.forEach { snapshot ->
                     if (FirebaseAuth.getInstance().currentUser?.uid == snapshot.key) return@forEach
                     val user = snapshot.getValue<User>(User::class.java)
-                    user.id = snapshot.key
-                    users.add(user)
+                    user?.id = snapshot.key
+                    users.add(user!!)
                 }
                 adapter?.notifyDataSetChanged()
                 progressView.visibility = View.GONE

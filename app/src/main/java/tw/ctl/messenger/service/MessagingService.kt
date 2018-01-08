@@ -28,8 +28,8 @@ class MessagingService : FirebaseMessagingService() {
         /**
          * Get data from notification.
          */
-        val title = remoteMessage.notification.title
-        val body = remoteMessage.notification.body
+        val title = remoteMessage.notification?.title
+        val body = remoteMessage.notification?.body
 
         val userId = remoteMessage.data["user_id"]
         val userName = remoteMessage.data["user_name"]

@@ -31,7 +31,6 @@ class UserAdapter(val users: MutableList<User>, val itemClick: (User) -> Unit, v
             with(user) {
                 Glide.with(itemView.context)
                         .load(user.profileImageUrl)
-                        .error(R.mipmap.ic_launcher_round)
                         .into(itemView.profileImage)
 
                 itemView.name.text = user.name
