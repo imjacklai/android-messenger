@@ -106,6 +106,21 @@ class Database {
         reference.child("users").child(message.chatPartnerId()).addListenerForSingleValueEvent(listener)
     }
 
+    fun fetchUsers(onData: (snapshot: DataSnapshot?) -> Unit,
+                   onCancelled: (error: DatabaseError?) -> Unit) {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot?) {
+                onData(snapshot)
+            }
+
+            override fun onCancelled(error: DatabaseError?) {
+                onCancelled(error)
+            }
+        }
+
+        reference.child("users").addListenerForSingleValueEvent(listener)
+    }
+
     fun removeUserMessage(uid: String, user: User, success: () -> Unit, failure: (error: DatabaseError?) -> Unit) {
         reference.child("user-messages").child(uid).child(user.id).removeValue { error, _ ->
             if (error != null) {

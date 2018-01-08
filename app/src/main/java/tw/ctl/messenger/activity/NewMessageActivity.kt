@@ -2,19 +2,15 @@ package tw.ctl.messenger.activity
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.PorterDuff
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
 import android.view.View
+import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.orhanobut.logger.Logger
 import kotlinx.android.synthetic.main.activity_new_message.*
+import tw.ctl.messenger.Database
 import tw.ctl.messenger.R
 import tw.ctl.messenger.adapter.UserAdapter
 import tw.ctl.messenger.model.User
@@ -32,37 +28,29 @@ class NewMessageActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        progressView.indeterminateDrawable.setColorFilter(
-                ContextCompat.getColor(this, R.color.colorPrimaryDark), PorterDuff.Mode.SRC_IN)
-
         val manager = LinearLayoutManager(this)
         manager.orientation = LinearLayoutManager.VERTICAL
         recyclerView.layoutManager = manager
-        adapter = UserAdapter(users,
-                itemClick = { user ->
-                    startChatActivity(user)
-                },
-                itemLongClick = { _ -> false })
+        adapter = UserAdapter(users, itemClick = { user ->
+            startChatActivity(user)
+        }, itemLongClick = { _ -> false })
         recyclerView.adapter = adapter
     }
 
     private fun fetchUsers() {
-        FirebaseDatabase.getInstance().reference.child("users").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                dataSnapshot.children.forEach { snapshot ->
-                    if (FirebaseAuth.getInstance().currentUser?.uid == snapshot.key) return@forEach
-                    val user = snapshot.getValue<User>(User::class.java)
-                    user?.id = snapshot.key
-                    users.add(user!!)
-                }
-                adapter?.notifyDataSetChanged()
-                progressView.visibility = View.GONE
+        Database.getInstance().fetchUsers(onData = { snapshot ->
+            snapshot?.children?.forEach { userSnapshot ->
+                if (FirebaseAuth.getInstance().currentUser?.uid == userSnapshot.key) return@forEach
+                val user = userSnapshot.getValue<User>(User::class.java) ?: return@forEach
+                user.id = userSnapshot.key
+                users.add(user)
             }
-
-            override fun onCancelled(error: DatabaseError?) {
-                Log.e("Messenger", "Unable to fetch users: $error")
-                progressView.visibility = View.GONE
-            }
+            adapter?.notifyDataSetChanged()
+            progressView.visibility = View.GONE
+        }, onCancelled = { error ->
+            progressView.visibility = View.GONE
+            Toast.makeText(this, "讀取失敗", Toast.LENGTH_SHORT).show()
+            Logger.e("fetch users cancelled: $error")
         })
     }
 
