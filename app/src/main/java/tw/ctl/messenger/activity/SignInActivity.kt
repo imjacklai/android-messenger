@@ -3,6 +3,7 @@ package tw.ctl.messenger.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.View.GONE
 import android.widget.Toast
@@ -22,7 +23,7 @@ import kotlinx.android.synthetic.main.activity_sign_in.*
 import tw.ctl.messenger.Database
 import tw.ctl.messenger.R
 
-class SignInActivity : BaseActivity(), GoogleApiClient.OnConnectionFailedListener {
+class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
     private val signInRequestCode = 9001
     private val signInCancelledStatusCode = 12501

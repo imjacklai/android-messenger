@@ -2,13 +2,10 @@ package tw.ctl.messenger.activity
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.PorterDuff
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -18,8 +15,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DatabaseReference
+import com.orhanobut.logger.Logger
 import kotlinx.android.synthetic.main.activity_messages.*
+import tw.ctl.messenger.Database
 import tw.ctl.messenger.R
 import tw.ctl.messenger.adapter.UserAdapter
 import tw.ctl.messenger.model.Message
@@ -27,25 +27,25 @@ import tw.ctl.messenger.model.User
 
 class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
 
-    private val RC_SIGN_IN = 9001
-    private val RC_NEW_MESSAGE = 9002
+    private val signInRequestCode = 9001
+    private val newMessageRequestCode = 9002
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val users: MutableList<User> = mutableListOf()
     private var adapter: UserAdapter? = null
     private var googleApiClient: GoogleApiClient? = null
+    private var refListeners: MutableList<Pair<DatabaseReference, ChildEventListener>> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_messages)
-        setupGoogleApiClient()
+        setupGoogleSignInClient()
+        setupUI()
 
         val currentUser = auth.currentUser
 
         if (currentUser == null) {
-            val intent = Intent(this, SignInActivity::class.java)
-            startActivityForResult(intent, RC_SIGN_IN)
+            startSignInActivity()
         } else {
-            setupUI()
             fetchUserMessages(currentUser.uid)
         }
 
@@ -53,9 +53,9 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         handleNotification(intent)
     }
 
-    override fun onResume() {
-        super.onResume()
-        adapter?.notifyDataSetChanged()
+    override fun onDestroy() {
+        super.onDestroy()
+        detachListeners()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -73,7 +73,7 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         if (item == null) { return super.onOptionsItemSelected(item) }
 
         if (item.itemId == R.id.signOut) {
-            signOut()
+            showSignOutDialog()
             return true
         }
 
@@ -85,10 +85,9 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
 
         if (resultCode != Activity.RESULT_OK) return
 
-        if (requestCode == RC_SIGN_IN) {
-            setupUI()
-            fetchUserMessages(auth.currentUser!!.uid)
-        } else if (requestCode == RC_NEW_MESSAGE && data != null) {
+        if (requestCode == signInRequestCode) {
+            fetchUserMessages(auth.currentUser?.uid)
+        } else if (requestCode == newMessageRequestCode && data != null) {
             val intent = Intent(this, ChatActivity::class.java)
             intent.putExtras(data.extras)
             startActivity(intent)
@@ -96,11 +95,11 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     }
 
     override fun onConnectionFailed(connectionResult: ConnectionResult) {
-        Log.e("Messenger", "Google api client connection failed: $connectionResult")
-        Toast.makeText(this, "Google Play Service 錯誤", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "發生錯誤", Toast.LENGTH_SHORT).show()
+        Logger.e("Google api client connection failed")
     }
 
-    private fun setupGoogleApiClient() {
+    private fun setupGoogleSignInClient() {
         val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.web_client_id))
                 .requestEmail()
@@ -112,36 +111,30 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
                 .build()
     }
 
-    private fun signOut() {
-        auth.signOut()
-
-        Auth.GoogleSignInApi.signOut(googleApiClient).setResultCallback { _ ->
-            val intent = Intent(this, SignInActivity::class.java)
-            startActivityForResult(intent, RC_SIGN_IN)
-        }
-    }
-
     private fun setupUI() {
         newMessageButton.setOnClickListener {
             val intent = Intent(this, NewMessageActivity::class.java)
-            startActivityForResult(intent, RC_NEW_MESSAGE)
+            startActivityForResult(intent, newMessageRequestCode)
         }
-
-        progressView.indeterminateDrawable.setColorFilter(
-                ContextCompat.getColor(this, R.color.colorPrimaryDark), PorterDuff.Mode.SRC_IN)
 
         val manager = LinearLayoutManager(this)
         manager.orientation = LinearLayoutManager.VERTICAL
         recyclerView.layoutManager = manager
-        adapter = UserAdapter(users,
-                itemClick = { user ->
-                    startChatActivity(user)
-                },
-                itemLongClick = { user ->
-                    showDeleteDialog(user)
-                    true
-                })
+        adapter = UserAdapter(users, itemClick = { user ->
+            startChatActivity(user)
+        }, itemLongClick = { user ->
+            showDeleteDialog(user)
+            true
+        })
         recyclerView.adapter = adapter
+    }
+
+    private fun startSignInActivity() {
+        val intent = Intent(this, SignInActivity::class.java)
+        startActivityForResult(intent, signInRequestCode)
+
+        users.clear()
+        adapter?.notifyDataSetChanged()
     }
 
     private fun startChatActivity(user: User) {
@@ -155,106 +148,74 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
         startActivity(intent)
     }
 
-    private fun fetchUserMessages(uid: String) {
-        FirebaseDatabase.getInstance().reference.child("user-list").child(uid)
-                .addChildEventListener(object : ChildEventListener {
-                    override fun onCancelled(error: DatabaseError?) {
-                        showFetchError()
-                        Log.e("Messenger", "Unable to fetch user messages (self): $error")
-                    }
+    private fun fetchUserMessages(uid: String?) {
+        if (uid == null) return
 
-                    override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
+        val refListenerPair = Database.getInstance().fetchUserMessages(uid, onChildAdded = { snapshot ->
+            progressView.visibility = View.VISIBLE
+            val userId = snapshot?.key
+            if (userId != null) {
+                fetchMessages(uid, userId)
+            }
+        }, onCancelled = { error ->
+            showFetchError()
+            Logger.e("fetch user messages cancelled: $error")
+        })
 
-                    }
-
-                    override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
-
-                    }
-
-                    override fun onChildAdded(snapshot: DataSnapshot, p1: String?) {
-                        progressView.visibility = View.VISIBLE
-                        val userId = snapshot.key
-                        fetchMessages(uid, userId)
-                    }
-
-                    override fun onChildRemoved(p0: DataSnapshot?) {
-
-                    }
-                })
+        refListeners.add(refListenerPair)
     }
 
-    private fun fetchMessages(uid: String, userId: String) {
-        FirebaseDatabase.getInstance().reference.child("user-list").child(uid).child(userId)
-                .addChildEventListener(object : ChildEventListener {
-                    override fun onCancelled(error: DatabaseError?) {
-                        showFetchError()
-                        Log.e("Messenger", "Unable to fetch user messages (partner): $error")
-                    }
+    private fun fetchMessages(uid: String, partnerId: String) {
+        val refListenerPair = Database.getInstance().fetchMessages(uid, partnerId, onChildAdded = { snapshot ->
+            val messageId = snapshot?.key
+            if (messageId != null) {
+                fetchMessage(messageId)
+            }
+        }, onCancelled = { error ->
+            showFetchError()
+            Logger.e("fetch messages cancelled: $error")
+        })
 
-                    override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
-
-                    }
-
-                    override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
-
-                    }
-
-                    override fun onChildAdded(snapshot: DataSnapshot, p1: String?) {
-                        val messageId = snapshot.key
-                        fetchMessage(messageId)
-                    }
-
-                    override fun onChildRemoved(p0: DataSnapshot?) {
-
-                    }
-                })
+        refListeners.add(refListenerPair)
     }
 
     private fun fetchMessage(messageId: String) {
-        FirebaseDatabase.getInstance().reference.child("messages").child(messageId)
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val message = snapshot.getValue<Message>(Message::class.java)
-                        fetchUser(message!!)
-                    }
-
-                    override fun onCancelled(error: DatabaseError?) {
-                        showFetchError()
-                        Log.e("Messenger", "Unable to fetch message: $error")
-                    }
-                })
+        Database.getInstance().fetchMessage(messageId, onData = { snapshot ->
+            val message = snapshot?.getValue<Message>(Message::class.java)
+            if (message != null) {
+                fetchMessageUser(message)
+            }
+        }, onCancelled = { error ->
+            showFetchError()
+            Logger.e("fetch message cancelled: $error")
+        })
     }
 
-    private fun fetchUser(message: Message) {
-        FirebaseDatabase.getInstance().reference.child("users").child(message.chatPartnerId())
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val user = snapshot.getValue<User>(User::class.java)
-                        user?.id = snapshot.key
-                        user?.timestamp = message.timestamp
+    private fun fetchMessageUser(message: Message) {
+        Database.getInstance().fetchUser(message, onData = { snapshot ->
+            val user = snapshot?.getValue<User>(User::class.java) ?: return@fetchUser
+            user.id = snapshot.key
+            user.timestamp = message.timestamp
 
-                        if (message.imageUrl == null) {
-                            user?.lastMessage = message.text
-                        } else {
-                            if (message.fromId == FirebaseAuth.getInstance().currentUser?.uid) {
-                                user?.lastMessage = "你傳送一張圖片"
-                            } else {
-                                user?.lastMessage = "對方傳送一張圖片"
-                            }
-                        }
+            if (message.imageUrl == null) {
+                user.lastMessage = message.text
+            } else {
+                if (message.fromId == FirebaseAuth.getInstance().currentUser?.uid) {
+                    user.lastMessage = "你傳送一張圖片"
+                } else {
+                    user.lastMessage = "對方傳送一張圖片"
+                }
+            }
 
-                        users.filter { it.id == user?.id }.forEach { users.remove(it) }
-                        users.add(user!!)
-                        users.sortByDescending { it.timestamp }
-                        adapter?.notifyDataSetChanged()
-                        progressView.visibility = View.GONE
-                    }
-
-                    override fun onCancelled(error: DatabaseError?) {
-                        showFetchError()
-                        Log.e("Messenger", "Unable to fetch user: $error")
-                    }
-                })
+            users.filter { it.id == user.id }.forEach { users.remove(it) }
+            users.add(user)
+            users.sortByDescending { it.timestamp }
+            adapter?.notifyDataSetChanged()
+            progressView.visibility = View.GONE
+        }, onCancelled = { error ->
+            showFetchError()
+            Logger.e("fetch user cancelled: $error")
+        })
     }
 
     private fun showFetchError() {
@@ -281,29 +242,50 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     private fun showDeleteDialog(user: User) {
         AlertDialog.Builder(this)
                 .setTitle("確定要刪除？")
-                .setPositiveButton("確定", { _, _ -> deleteUser(user) })
+                .setPositiveButton("確定", { _, _ -> removeUserMessage(user) })
                 .setNegativeButton("取消", { _, _ -> })
                 .show()
     }
 
-    private fun deleteUser(user: User) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        FirebaseDatabase.getInstance().reference.child("user-messages").child(uid).child(user.id).removeValue { error, _ ->
-            if (error != null) {
-                Log.d("Messenger", "Unable to remove from user messages: $error")
-                return@removeValue
-            }
+    private fun showSignOutDialog() {
+        AlertDialog.Builder(this)
+                .setTitle("要記住您的帳號嗎？")
+                .setPositiveButton("是", { _, _ -> signOut(true) })
+                .setNegativeButton("否", { _, _ -> signOut(false)})
+                .show()
+    }
 
-            FirebaseDatabase.getInstance().reference.child("user-list").child(uid).child(user.id).removeValue removeLabel@ { error, _ ->
-                if (error != null) {
-                    Log.d("Messenger", "Unable to remove from user list: $error")
-                    return@removeLabel
-                }
+    private fun signOut(remember: Boolean) {
+        detachListeners()
 
-                users.remove(user)
-                adapter?.notifyDataSetChanged()
+        auth.signOut()
+
+        if (remember) {
+            startSignInActivity()
+        } else {
+            Auth.GoogleSignInApi.signOut(googleApiClient).setResultCallback { _ ->
+                startSignInActivity()
             }
         }
+    }
+
+    private fun detachListeners() {
+        for (pair in refListeners) {
+            pair.first.removeEventListener(pair.second)
+        }
+        refListeners.clear()
+    }
+
+    private fun removeUserMessage(user: User) {
+        val uid = auth.currentUser?.uid ?: return
+
+        Database.getInstance().removeUserMessage(uid, user, success = {
+            users.remove(user)
+            adapter?.notifyDataSetChanged()
+        }, failure = { error ->
+            Toast.makeText(this, "發生錯誤", Toast.LENGTH_SHORT).show()
+            Logger.e("Failed to remove user messages: $error")
+        })
     }
 
 }
