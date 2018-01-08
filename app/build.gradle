@@ -45,6 +45,8 @@ dependencies {
 
     compile 'de.hdodenhof:circleimageview:2.1.0'
 
+    compile 'com.orhanobut:logger:2.1.1'
+
     testCompile 'junit:junit:4.12'
 
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {

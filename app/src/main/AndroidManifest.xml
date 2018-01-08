@@ -23,6 +23,10 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".activity.BaseActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:configChanges="orientation|screenSize"/>
+
         <activity
             android:name=".activity.SignInActivity"
             android:theme="@style/AppTheme.NoActionBar"
