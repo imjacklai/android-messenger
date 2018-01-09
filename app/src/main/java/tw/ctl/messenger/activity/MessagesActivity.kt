@@ -30,10 +30,10 @@ class MessagesActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailed
     private val signInRequestCode = 9001
     private val newMessageRequestCode = 9002
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val users: MutableList<User> = mutableListOf()
+    private val users = mutableListOf<User>()
     private var adapter: UserAdapter? = null
     private var googleApiClient: GoogleApiClient? = null
-    private var refListeners: MutableList<Pair<DatabaseReference, ChildEventListener>> = mutableListOf()
+    private var refListeners = mutableListOf<Pair<DatabaseReference, ChildEventListener>>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

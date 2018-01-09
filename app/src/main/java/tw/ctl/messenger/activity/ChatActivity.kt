@@ -1,18 +1,22 @@
 package tw.ctl.messenger.activity
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.storage.FirebaseStorage
+import com.orhanobut.logger.Logger
 import kotlinx.android.synthetic.main.activity_chat.*
+import tw.ctl.messenger.Database
 import tw.ctl.messenger.R
 import tw.ctl.messenger.adapter.MessageAdapter
 import tw.ctl.messenger.model.Message
@@ -22,10 +26,11 @@ import java.util.*
 
 class ChatActivity : AppCompatActivity() {
 
-    private val RC_PICK_IMAGE = 9001
+    private val pickImageRequestCode = 9001
     private var toUser: User? = null
     private var adapter: MessageAdapter? = null
     private val messages = mutableListOf<Message>()
+    private var refListener: Pair<DatabaseReference, ChildEventListener>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,10 +49,19 @@ class ChatActivity : AppCompatActivity() {
         fetchUserMessages()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (refListener != null) {
+            refListener?.first?.removeEventListener(refListener?.second)
+        }
+        refListener = null
+        adapter = null
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode != RC_PICK_IMAGE || resultCode != Activity.RESULT_OK || data == null) return
+        if (requestCode != pickImageRequestCode || resultCode != Activity.RESULT_OK || data == null) return
 
         val selectedImage = data.data
         val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, selectedImage)
@@ -55,13 +69,13 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        toolbar.title = toUser!!.name
+        toolbar.title = toUser?.name
 
         pickPhotoButton.setOnClickListener {
             val intent = Intent()
             intent.type = "image/*"
             intent.action = Intent.ACTION_GET_CONTENT
-            startActivityForResult(Intent.createChooser(intent, "選擇一張照片"), RC_PICK_IMAGE)
+            startActivityForResult(Intent.createChooser(intent, "選擇一張照片"), pickImageRequestCode)
         }
 
         sendButton.setOnClickListener {
@@ -73,56 +87,48 @@ class ChatActivity : AppCompatActivity() {
         val manager = LinearLayoutManager(this)
         manager.orientation = LinearLayoutManager.VERTICAL
         recyclerView.layoutManager = manager
-        adapter = MessageAdapter(messages)
+        adapter = MessageAdapter(messages, toUser?.profileImageUrl)
         recyclerView.adapter = adapter
 
         // Scroll to bottom when keyboard show up.
         recyclerView.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            if (bottom < oldBottom) manager.smoothScrollToPosition(recyclerView, null, adapter!!.itemCount)
+            val itemCount = adapter?.itemCount ?: return@addOnLayoutChangeListener
+            if (bottom < oldBottom) manager.smoothScrollToPosition(recyclerView, null, itemCount)
+        }
+
+        recyclerView.setOnTouchListener { view, motionEvent ->
+            input.clearFocus()
+            val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+            false
         }
     }
 
     private fun fetchUserMessages() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        FirebaseDatabase.getInstance().reference.child("user-messages").child(uid).child(toUser?.id)
-                .addChildEventListener(object : ChildEventListener {
-                    override fun onCancelled(error: DatabaseError?) {
-                        Log.e("Messenger", "Unable to fetch user messages: $error")
-                    }
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val partnerId = toUser?.id ?: return
 
-                    override fun onChildMoved(p0: DataSnapshot?, p1: String?) {
-
-                    }
-
-                    override fun onChildChanged(p0: DataSnapshot?, p1: String?) {
-
-                    }
-
-                    override fun onChildAdded(snapshot: DataSnapshot, p1: String?) {
-                        val messageId = snapshot.key
-                        fetchMessage(messageId)
-                    }
-
-                    override fun onChildRemoved(p0: DataSnapshot?) {
-
-                    }
-                })
+        refListener = Database.getInstance().fetchChatMessages(uid, partnerId, onChildAdded = { snapshot ->
+            val messageId = snapshot?.key
+            fetchUserMessage(messageId)
+        }, onCancelled = { error ->
+            Toast.makeText(this, "讀取失敗", Toast.LENGTH_SHORT).show()
+            Logger.e("fetch user messages cancelled: $error")
+        })
     }
 
-    private fun fetchMessage(messageId: String) {
-        FirebaseDatabase.getInstance().reference.child("messages").child(messageId)
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val message = snapshot.getValue<Message>(Message::class.java)
-                        messages.add(message!!)
-                        adapter?.notifyItemInserted(messages.indexOf(message))
-                        recyclerView.smoothScrollToPosition(messages.size - 1)
-                    }
+    private fun fetchUserMessage(messageId: String?) {
+        if (messageId == null) return
 
-                    override fun onCancelled(error: DatabaseError?) {
-                        Log.e("Messenger", "Unable to fetch message: $error")
-                    }
-                })
+        Database.getInstance().fetchMessage(messageId, onData = { snapshot ->
+            val message = snapshot?.getValue<Message>(Message::class.java) ?: return@fetchMessage
+            messages.add(message)
+            adapter?.notifyItemInserted(messages.indexOf(message))
+            recyclerView.smoothScrollToPosition(messages.size - 1)
+        }, onCancelled = { error ->
+            Toast.makeText(this, "讀取失敗", Toast.LENGTH_SHORT).show()
+            Logger.e("fetch message cancelled: $error")
+        })
     }
 
     private fun sendText(text: String) {
@@ -134,7 +140,6 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun send(properties: MutableMap<String, Any>) {
-        val reference = FirebaseDatabase.getInstance().reference.child("messages").push()
         val toId = toUser?.id
         val fromId = FirebaseAuth.getInstance().currentUser?.uid
         val timestamp = Calendar.getInstance().timeInMillis
@@ -142,28 +147,11 @@ class ChatActivity : AppCompatActivity() {
 
         for ((key, value) in properties) { values[key] = value }
 
-        reference.updateChildren(values, { error, _ ->
-            if (error != null) {
-                Toast.makeText(this, "訊息傳送失敗", Toast.LENGTH_SHORT).show()
-                Log.e("Messenger", "Unable to save message: $error")
-                return@updateChildren
-            }
-
-            val messageId = reference.key
-
-            FirebaseDatabase.getInstance().reference.child("user-messages").child(fromId).child(toId)
-                    .updateChildren(mutableMapOf(messageId to 1) as Map<String, Any>?)
-
-            FirebaseDatabase.getInstance().reference.child("user-messages").child(toId).child(fromId)
-                    .updateChildren(mutableMapOf(messageId to 1) as Map<String, Any>?)
-
-            FirebaseDatabase.getInstance().reference.child("user-list").child(fromId).child(toId)
-                    .setValue(mutableMapOf(messageId to 1) as Map<String, Any>?)
-
-            FirebaseDatabase.getInstance().reference.child("user-list").child(toId).child(fromId)
-                    .setValue(mutableMapOf(messageId to 1) as Map<String, Any>?)
-
+        Database.getInstance().sendMessage(values, fromId, toId, success = {
             input.setText("")
+        }, failure = { error ->
+            Toast.makeText(this, "訊息傳送失敗", Toast.LENGTH_SHORT).show()
+            Logger.e("send message failed: $error")
         })
     }
 
@@ -179,7 +167,8 @@ class ChatActivity : AppCompatActivity() {
                     sendImage(uri.toString(), image)
                 }
                 .addOnFailureListener { exception ->
-                    Log.e("Messenger", "Unable to upload image: ${exception.localizedMessage}")
+                    Toast.makeText(this, "照片傳送失敗", Toast.LENGTH_SHORT).show()
+                    Logger.e("Failed to upload image: ${exception.localizedMessage}")
                 }
     }
 

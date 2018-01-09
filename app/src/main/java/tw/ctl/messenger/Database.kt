@@ -121,6 +121,30 @@ class Database {
         reference.child("users").addListenerForSingleValueEvent(listener)
     }
 
+    fun fetchChatMessages(uid: String, partnerId: String, onChildAdded: (snapshot: DataSnapshot?) -> Unit,
+                          onCancelled: (error: DatabaseError?) -> Unit): Pair<DatabaseReference, ChildEventListener> {
+        val listener = object : ChildEventListener {
+            override fun onCancelled(error: DatabaseError?) {
+                onCancelled(error)
+            }
+
+            override fun onChildMoved(p0: DataSnapshot?, p1: String?) {}
+
+            override fun onChildChanged(p0: DataSnapshot?, p1: String?) {}
+
+            override fun onChildAdded(snapshot: DataSnapshot?, p1: String?) {
+                onChildAdded(snapshot)
+            }
+
+            override fun onChildRemoved(p0: DataSnapshot?) {}
+        }
+
+        val ref = reference.child("user-messages").child(uid).child(partnerId)
+        ref.addChildEventListener(listener)
+
+        return Pair(ref, listener)
+    }
+
     fun removeUserMessage(uid: String, user: User, success: () -> Unit, failure: (error: DatabaseError?) -> Unit) {
         reference.child("user-messages").child(uid).child(user.id).removeValue { error, _ ->
             if (error != null) {
@@ -137,6 +161,33 @@ class Database {
                 success()
             }
         }
+    }
+
+    fun sendMessage(values: MutableMap<String, Any?>, fromId: String?, toId: String?,
+                    success: () -> Unit, failure: (error: DatabaseError?) -> Unit) {
+        val ref = reference.child("messages").push()
+        ref.updateChildren(values, { error, _ ->
+            if (error != null) {
+                failure(error)
+                return@updateChildren
+            }
+
+            val messageId = ref.key
+
+            reference.child("user-messages").child(fromId).child(toId)
+                    .updateChildren(mutableMapOf(messageId to 1) as Map<String, Any>?)
+
+            reference.child("user-messages").child(toId).child(fromId)
+                    .updateChildren(mutableMapOf(messageId to 1) as Map<String, Any>?)
+
+            reference.child("user-list").child(fromId).child(toId)
+                    .setValue(mutableMapOf(messageId to 1) as Map<String, Any>?)
+
+            reference.child("user-list").child(toId).child(fromId)
+                    .setValue(mutableMapOf(messageId to 1) as Map<String, Any>?)
+
+            success()
+        })
     }
 
 }

@@ -3,22 +3,17 @@ package tw.ctl.messenger.adapter
 import android.graphics.Color
 import android.support.constraint.ConstraintSet
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.item_message.view.*
 import tw.ctl.messenger.R
 import tw.ctl.messenger.model.Message
-import tw.ctl.messenger.model.User
 
-class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
+class MessageAdapter(private val messages: MutableList<Message>, private val partnerImageUrl: String?)
+    : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
@@ -26,7 +21,7 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
-        holder.bindMessage(messages[position])
+        holder.bindMessage(messages[position], partnerImageUrl)
     }
 
     override fun getItemCount(): Int {
@@ -34,7 +29,7 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
     }
 
     class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        fun bindMessage(message: Message) {
+        fun bindMessage(message: Message, partnerImageUrl: String?) {
             with(message) {
                 if (message.fromId == FirebaseAuth.getInstance().currentUser?.uid) {
                     // Self message.
@@ -43,19 +38,9 @@ class MessageAdapter(val messages: MutableList<Message>) : RecyclerView.Adapter<
                     updateConstraint(true)
                 } else {
                     // Partner message.
-                    FirebaseDatabase.getInstance().reference.child("users").child(message.fromId)
-                            .addListenerForSingleValueEvent(object : ValueEventListener {
-                                override fun onDataChange(snapshot: DataSnapshot) {
-                                    val user = snapshot.getValue<User>(User::class.java)
-                                    Glide.with(itemView.context)
-                                            .load(user?.profileImageUrl)
-                                            .into(itemView.profileImage)
-                                }
-
-                                override fun onCancelled(error: DatabaseError?) {
-                                    Log.e("Messenger", "Unable to fetch user: $error")
-                                }
-                            })
+                    Glide.with(itemView.context)
+                            .load(partnerImageUrl)
+                            .into(itemView.profileImage)
 
                     itemView.profileImage.visibility = View.VISIBLE
                     setupMessage(message, R.drawable.partner_message_bubble_bg, Color.BLACK)
